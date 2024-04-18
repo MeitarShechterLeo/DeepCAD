@@ -2,7 +2,7 @@ import torch
 import torch.optim as optim
 from tqdm import tqdm
 from model import CADTransformer
-from .base import BaseTrainer
+from .base import BaseTrainer, DecodingOnlyBaseTrainer
 from .loss import CADLoss
 from .scheduler import GradualWarmupScheduler
 from cadlib.macro import *
@@ -102,3 +102,27 @@ class TrainerAE(BaseTrainer):
                                 {"line": line_acc, "arc": arc_acc, "circle": circle_acc,
                                  "plane": sket_plane_acc, "trans": sket_trans_acc, "extent": extent_one_acc},
                                 global_step=self.clock.epoch)
+
+
+class DecodingOnlyTrainerAE(DecodingOnlyBaseTrainer):
+    def build_net(self, cfg):
+        self.net = CADTransformer(cfg)
+
+    def decode(self, z):
+        """decode given latent vectors"""
+        outputs = self.net(None, None, z=z, return_tgt=False)
+        return outputs
+
+    def logits2vec(self, outputs, refill_pad=True, to_numpy=True):
+        """network outputs (logits) to final CAD vector"""
+        out_command = torch.argmax(torch.softmax(outputs['command_logits'], dim=-1), dim=-1)  # (N, S)
+        out_args = torch.argmax(torch.softmax(outputs['args_logits'], dim=-1), dim=-1) - 1  # (N, S, N_ARGS)
+        if refill_pad: # fill all unused element to -1
+            mask = ~torch.tensor(CMD_ARGS_MASK).bool().to(out_args.device)[out_command.long()]
+            out_args[mask] = -1
+
+        out_cad_vec = torch.cat([out_command.unsqueeze(-1), out_args], dim=-1)
+        if to_numpy:
+            out_cad_vec = out_cad_vec.detach().cpu().numpy()
+
+        return out_cad_vec

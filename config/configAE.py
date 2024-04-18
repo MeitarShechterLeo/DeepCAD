@@ -103,3 +103,45 @@ class ConfigAE(object):
         
         args = parser.parse_args()
         return parser, args
+
+class FixedConfigAE(object):
+    def __init__(self, phase):
+        self.is_train = phase == "train"
+
+        self.set_configuration()
+
+        # experiment paths
+        self.exp_dir = os.path.join(self.proj_dir, self.exp_name)
+
+        self.model_dir = os.path.join(self.exp_dir, 'model')
+        ensure_dirs([self.log_dir, self.model_dir])
+
+    def set_configuration(self):
+        self.args_dim = ARGS_DIM # 256
+        self.n_args = N_ARGS
+        self.n_commands = len(ALL_COMMANDS)  # line, arc, circle, EOS, SOS
+
+        self.n_layers = 4                # Number of Encoder blocks
+        self.n_layers_decode = 4         # Number of Decoder blocks
+        self.n_heads = 8                 # Transformer config: number of heads
+        self.dim_feedforward = 512       # Transformer config: FF dimensionality
+        self.d_model = 256               # Transformer config: model dimensionality
+        self.dropout = 0.1                # Dropout rate used in basic layers and Transformers
+        self.dim_z = 256                 # Latent vector dimensionality
+        self.use_group_emb = True
+
+        self.max_n_ext = MAX_N_EXT
+        self.max_n_loops = MAX_N_LOOPS
+        self.max_n_curves = MAX_N_CURVES
+
+        self.max_num_groups = 30
+        self.max_total_len = MAX_TOTAL_LEN
+
+        self.loss_weights = {
+            "loss_cmd_weight": 1.0,
+            "loss_args_weight": 2.0
+        }
+
+        self.exp_name = 'pretrained'
+        self.ckpt = '1000'
+        self.proj_dir = 'proj_log/{}/model'.format(self.exp_name)

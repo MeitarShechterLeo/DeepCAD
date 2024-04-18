@@ -126,5 +126,22 @@ def decode(cfg):
                 fp.create_dataset('out_vec', data=out_vec[:seq_len], dtype=np.int32)
 
 
+def decode_given_model(tr_agent, batch_z):
+    with torch.no_grad():
+        outputs = tr_agent.decode(batch_z)
+        batch_out_vec = tr_agent.logits2vec(outputs)
+
+    res = []
+
+    for i in range(len(batch_z)):
+        out_vec = batch_out_vec[i]
+        out_command = out_vec[:, 0]
+        seq_len = out_command.tolist().index(EOS_IDX)
+
+        res.append(out_vec[:seq_len])
+
+    return res
+
+
 if __name__ == '__main__':
     main()

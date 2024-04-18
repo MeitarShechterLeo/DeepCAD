@@ -166,3 +166,34 @@ class TrainClock(object):
         self.epoch = clock_dict['epoch']
         self.minibatch = clock_dict['minibatch']
         self.step = clock_dict['step']
+
+
+class DecodingOnlyBaseTrainer(object):
+    """Base trainer that provides common training behavior.
+        All customized trainer should be subclass of this class.
+    """
+    def __init__(self, cfg):
+        self.cfg = cfg
+
+        self.model_dir = cfg.model_dir
+
+        # build network
+        self.build_net(cfg)
+
+    @abstractmethod
+    def build_net(self, cfg):
+        raise NotImplementedError
+
+    def load_ckpt(self, name=None):
+        """load checkpoint from saved checkpoint"""
+        name = name if name == 'latest' else "ckpt_epoch{}".format(name)
+        load_path = os.path.join(self.model_dir, "{}.pth".format(name))
+        if not os.path.exists(load_path):
+            raise ValueError("Checkpoint {} not exists.".format(load_path))
+
+        checkpoint = torch.load(load_path)
+        print("Loading checkpoint from {} ...".format(load_path))
+        if isinstance(self.net, nn.DataParallel):
+            self.net.module.load_state_dict(checkpoint['model_state_dict'])
+        else:
+            self.net.load_state_dict(checkpoint['model_state_dict'])
