@@ -1,2 +1,2 @@
-from .configAE import ConfigAE
+from .configAE import ConfigAE, FixedConfigAE
 from .configLGAN import ConfigLGAN
