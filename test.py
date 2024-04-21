@@ -6,6 +6,8 @@ from trainer import TrainerAE
 import torch
 import numpy as np
 import os
+import sys
+sys.path.append(os.getcwd())
 import h5py
 from cadlib.macro import EOS_IDX
 
