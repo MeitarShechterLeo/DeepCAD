@@ -18,6 +18,8 @@ import random
 
 def vec2CADsolid(vec, is_numerical=True, n=256):
     cad = CADSequence.from_vector(vec, is_numerical=is_numerical, n=256)
+    if len(cad.seq) == 0:
+        return None
     cad = create_CAD(cad)
     return cad
 
@@ -25,8 +27,12 @@ def vec2CADsolid(vec, is_numerical=True, n=256):
 def create_CAD(cad_seq: CADSequence):
     """create a 3D CAD model from CADSequence. Only support extrude with boolean operation."""
     body = create_by_extrude(cad_seq.seq[0])
+    if body is None:
+        return None
     for extrude_op in cad_seq.seq[1:]:
         new_body = create_by_extrude(extrude_op)
+        if new_body is None:
+            continue
         if extrude_op.operation == EXTRUDE_OPERATIONS.index("NewBodyFeatureOperation") or \
                 extrude_op.operation == EXTRUDE_OPERATIONS.index("JoinFeatureOperation"):
             body = BRepAlgoAPI_Fuse(body, new_body).Shape()
@@ -46,9 +52,16 @@ def create_by_extrude(extrude_op: Extrude):
     sketch_plane.origin = extrude_op.sketch_pos
 
     face = create_profile_face(profile, sketch_plane)
+    if face is None:
+        return None
     normal = gp_Dir(*extrude_op.sketch_plane.normal)
     ext_vec = gp_Vec(normal).Multiplied(extrude_op.extent_one)
-    body = BRepPrimAPI_MakePrism(face, ext_vec).Shape()
+    try:
+        body = BRepPrimAPI_MakePrism(face, ext_vec).Shape()
+    except Exception as e:
+        print(f'got error: {e}')
+        return None
+
     if extrude_op.extent_type == EXTENT_TYPE.index("SymmetricFeatureExtentType"):
         body_sym = BRepPrimAPI_MakePrism(face, ext_vec.Reversed()).Shape()
         body = BRepAlgoAPI_Fuse(body, body_sym).Shape()
@@ -67,6 +80,10 @@ def create_profile_face(profile: Profile, sketch_plane: CoordSystem):
     gp_face = gp_Pln(gp_Ax3(origin, normal, x_axis))
 
     all_loops = [create_loop_3d(loop, sketch_plane) for loop in profile.children]
+    all_loops = [loop for loop in all_loops if loop is not None]
+    if len(all_loops) == 0:
+        return None
+
     topo_face = BRepBuilderAPI_MakeFace(gp_face, all_loops[0])
     for loop in all_loops[1:]:
         topo_face.Add(loop.Reversed())
@@ -81,7 +98,13 @@ def create_loop_3d(loop: Loop, sketch_plane: CoordSystem):
         if topo_edge == -1: # omitted
             continue
         topo_wire.Add(topo_edge)
-    return topo_wire.Wire()
+    try:
+        wire = topo_wire.Wire()
+    except Exception as e:
+        print(f'get error: {e}')
+        return None
+
+    return wire 
 
 
 def create_edge_3d(curve: CurveBase, sketch_plane: CoordSystem):

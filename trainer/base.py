@@ -3,7 +3,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from abc import abstractmethod
-from tensorboardX import SummaryWriter
+# from tensorboardX import SummaryWriter
 
 
 class BaseTrainer(object):
@@ -27,9 +27,9 @@ class BaseTrainer(object):
         # set optimizer
         self.set_optimizer(cfg)
 
-        # set tensorboard writer
-        self.train_tb = SummaryWriter(os.path.join(self.log_dir, 'train.events'))
-        self.val_tb = SummaryWriter(os.path.join(self.log_dir, 'val.events'))
+        # # set tensorboard writer
+        # self.train_tb = SummaryWriter(os.path.join(self.log_dir, 'train.events'))
+        # self.val_tb = SummaryWriter(os.path.join(self.log_dir, 'val.events'))
 
     @abstractmethod
     def build_net(self, cfg):

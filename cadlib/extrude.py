@@ -147,7 +147,9 @@ class Extrude(object):
     @staticmethod
     def from_vector(vec, is_numerical=False, n=256):
         """vector representation: commands [SOL, ..., SOL, ..., EXT]"""
-        assert vec[-1][0] == EXT_IDX and vec[0][0] == SOL_IDX
+        if vec[-1][0] != EXT_IDX or vec[0][0] != SOL_IDX:
+            return None
+
         profile_vec = np.concatenate([vec[:-1], EOS_VEC[np.newaxis]])
         profile = Profile.from_vector(profile_vec, is_numerical=is_numerical)
         ext_vec = vec[-1][-N_ARGS_EXT:]
@@ -253,7 +255,10 @@ class CADSequence(object):
         ext_seq = []
         for i in range(len(ext_indices) - 1):
             start, end = ext_indices[i], ext_indices[i + 1]
-            ext_seq.append(Extrude.from_vector(vec[start+1:end+1], is_numerical, n))
+            extrude = Extrude.from_vector(vec[start+1:end+1], is_numerical, n)
+            if extrude is None:
+                continue
+            ext_seq.append(extrude)
         cad_seq = CADSequence(ext_seq)
         return cad_seq
 

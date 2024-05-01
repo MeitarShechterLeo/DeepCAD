@@ -114,7 +114,7 @@ class FixedConfigAE(object):
         self.exp_dir = os.path.join(self.proj_dir, self.exp_name)
 
         self.model_dir = os.path.join(self.exp_dir, 'model')
-        ensure_dirs([self.log_dir, self.model_dir])
+        ensure_dirs([self.model_dir])
 
     def set_configuration(self):
         self.args_dim = ARGS_DIM # 256
@@ -144,4 +144,6 @@ class FixedConfigAE(object):
 
         self.exp_name = 'pretrained'
         self.ckpt = '1000'
-        self.proj_dir = 'proj_log/{}/model'.format(self.exp_name)
+        self.proj_dir = '/home/meitars/Code/DeepCAD/proj_log'
+        print(f'self.proj_dir is set to: {self.proj_dir}')
+        

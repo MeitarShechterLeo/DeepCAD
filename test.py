@@ -1,15 +1,17 @@
-from tqdm import tqdm
-from dataset.cad_dataset import get_dataloader
-from config import ConfigAE
-from utils import ensure_dir
-from trainer import TrainerAE
-import torch
-import numpy as np
 import os
 import sys
-sys.path.append(os.getcwd())
 import h5py
-from cadlib.macro import EOS_IDX
+import torch
+import numpy as np
+deepcad_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, deepcad_path)  # Adds the DeepCAD directory at the start of the sys path
+
+from tqdm import tqdm
+from DeepCAD.config import ConfigAE
+from DeepCAD.utils import ensure_dir
+from DeepCAD.trainer import TrainerAE
+from DeepCAD.cadlib.macro import EOS_IDX
+from DeepCAD.dataset.cad_dataset import get_dataloader
 
 
 def main():
