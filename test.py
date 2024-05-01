@@ -107,6 +107,7 @@ def decode(cfg):
     # load latent zs
     with h5py.File(cfg.z_path, 'r') as fp:
         zs = fp['zs'][:]
+        ids = fp['ids'][:]
     save_dir = cfg.z_path.split('.')[0] + '_dec'
     ensure_dir(save_dir)
 
@@ -123,7 +124,9 @@ def decode(cfg):
             out_command = out_vec[:, 0]
             seq_len = out_command.tolist().index(EOS_IDX)
 
-            save_path = os.path.join(save_dir, '{}.h5'.format(i + j))
+            # save_path = os.path.join(save_dir, '{}.h5'.format(i + j))
+            curr_id = str(ids[i + j])[2:-1]
+            save_path = os.path.join(save_dir, '{}.h5'.format('_'.join(curr_id.split('/'))))
             with h5py.File(save_path, 'w') as fp:
                 fp.create_dataset('out_vec', data=out_vec[:seq_len], dtype=np.int32)
 

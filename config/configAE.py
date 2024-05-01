@@ -72,11 +72,15 @@ class ConfigAE(object):
             "loss_args_weight": 2.0
         }
 
+        # pc config
+        self.n_points = 2048
+
     def parse(self):
         """initiaize argument parser. Define default hyperparameters and collect from command-line arguments."""
         parser = argparse.ArgumentParser()
 
         parser.add_argument('--proj_dir', type=str, default="proj_log", help="path to project folder where models and logs will be saved")
+        parser.add_argument('--pc_root', type=str, default="path_to_pc_data", help="path to point clouds data folder")
         parser.add_argument('--data_root', type=str, default="data", help="path to source data folder")
         parser.add_argument('--exp_name', type=str, default=os.getcwd().split('/')[-1], help="name of this experiment")
         parser.add_argument('-g', '--gpu_ids', type=str, default='0', help="gpu to use, e.g. 0  0,1,2. CPU not supported.")
@@ -84,7 +88,7 @@ class ConfigAE(object):
         parser.add_argument('--batch_size', type=int, default=512, help="batch size")
         parser.add_argument('--num_workers', type=int, default=8, help="number of workers for data loading")
 
-        parser.add_argument('--nr_epochs', type=int, default=1000, help="total number of epochs to train")
+        parser.add_argument('--nr_epochs', type=int, default=17, help="total number of epochs to train")
         parser.add_argument('--lr', type=float, default=1e-3, help="initial learning rate")
         parser.add_argument('--grad_clip', type=float, default=1.0, help="initial learning rate")
         parser.add_argument('--warmup_step', type=int, default=2000, help="step size for learning rate warm up")
@@ -95,6 +99,7 @@ class ConfigAE(object):
         parser.add_argument('--val_frequency', type=int, default=10, help="run validation every x iterations")
         parser.add_argument('--vis_frequency', type=int, default=2000, help="visualize output every x iterations")
         parser.add_argument('--augment', action='store_true', help="use random data augmentation")
+        parser.add_argument('--train_pc2cad', action='store_true', default=False, help="train pc encoder instead of sequence")
         
         if not self.is_train:
             parser.add_argument('-m', '--mode', type=str, choices=['rec', 'enc', 'dec'])

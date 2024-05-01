@@ -10,7 +10,9 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["--src", "/home/meitars/Code/DeepCAD/proj_log/pretrained/results/test_1000"],
+            // "args": ["--src", "/home/meitars/Code/DeepCAD/proj_log/pretrained/results/test_1000"],
+            // "args": ["--pc_root", "data/pc_cad", "--exp_name", "pretrained", "--ae_ckpt", "1000", "-g", "1"],
+            "args": ["--pc_root", "data/pc_cad", "--exp_name", "pc2cad_end2end_17epochs", "-g", "1", "--train_pc2cad", "--batch_size", "128",],
             "env": {
                 "PYTHONPATH": "${PYTHONPATH}:/home/meitars/Code/DeepCAD/utils:/home/meitars/Code/DeepCAD"
             }

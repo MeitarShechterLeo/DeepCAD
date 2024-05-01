@@ -11,24 +11,22 @@ import json
 import random
 import sys
 sys.path.append("..")
+from pathlib import Path
 from trainer.base import BaseTrainer
+from model.pointnet import PointnetSAModule
 from utils import cycle, ensure_dirs, ensure_dir, read_ply, write_ply
-try:
-    from pointnet2_ops.pointnet2_modules import PointnetFPModule, PointnetSAModule
-except Exception as e:
-    print("need to install https://github.com/erikwijmans/Pointnet2_PyTorch")
-    exit()
 
 
 class Config(object):
     n_points = 2048
     batch_size = 128
-    num_workers = 4
+    num_workers = 2
     nr_epochs = 200
     lr = 1e-4
     lr_step_size = 50
     # beta1 = 0.5
     grad_clip = None
+    noise = 0.02
 
     save_frequency = 100
     val_frequency = 10
@@ -170,19 +168,38 @@ class ShapeCodesDataset(Dataset):
         self.pc_root = config.pc_root
         self.path = config.split_path
         with open(self.path, "r") as fp:
-            self.all_data = json.load(fp)[phase]
+            all_data = json.load(fp)[phase]
+            assert len(all_data) > 0, 'Dataset is empty.'
+            real_data_idx = []
+            real_data = []
+            for idx, data_id in enumerate(all_data):
+                pc_path = os.path.join(self.pc_root, data_id + '.ply')
+                if not os.path.exists(pc_path):
+                    continue
+                real_data_idx.append(idx)    
+                real_data.append(data_id)    
+
+            self.all_data = real_data
 
         with h5py.File(self.data_root, 'r') as fp:
-            self.zs = fp["{}_zs".format(phase)][:]
+            zs = fp["{}_zs".format(phase)][:]
+            self.zs = [zs[idx] for idx in real_data_idx]
 
     def __getitem__(self, index):
         data_id = self.all_data[index]
         pc_path = os.path.join(self.pc_root, data_id + '.ply')
         if not os.path.exists(pc_path):
-            return self.__getitem__(index + 1)
+            raise ValueError(f'{pc_path} not found!')
+            # return self.__getitem__(index + 1)
         pc = read_ply(pc_path)
+        # pc_n = read_ply(pc_path, with_normal=True)
+        # pc = pc_n[:, :3]
+        # normal = pc_n[:, -3:]
         sample_idx = random.sample(list(range(pc.shape[0])), self.n_points)
         pc = pc[sample_idx]
+        # normal = normal[sample_idx]
+        # normal = normal / (np.linalg.norm(normal, axis=1, keepdims=True) + 1e-6)
+        # pc = pc + np.random.uniform(-self.noise, self.noise, (pc.shape[0], 1)) * normal
         pc = torch.tensor(pc, dtype=torch.float32)
         shape_code = torch.tensor(self.zs[index], dtype=torch.float32)
         return {"points": pc, "code": shape_code, "id": data_id}
@@ -198,96 +215,104 @@ def get_dataloader(phase, config, shuffle=None):
     dataloader = DataLoader(dataset, batch_size=config.batch_size, shuffle=is_shuffle, num_workers=config.num_workers)
     return dataloader
 
+def main():
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--proj_dir', type=str, default="proj_log",
-                   help="path to project folder where models and logs will be saved")
-parser.add_argument('--pc_root', type=str, default="path_to_pc_data", help="path to point clouds data folder")
-parser.add_argument('--split_path', type=str, default="data/train_val_test_split.json", help="path to train-val-test split")
-parser.add_argument('--exp_name', type=str, required=True, help="name of this experiment")
-parser.add_argument('--ae_ckpt', type=str, required=True, help="desired checkpoint to restore")
-parser.add_argument('--continue', dest='cont', action='store_true', help="continue training from checkpoint")
-parser.add_argument('--ckpt', type=str, default='latest', required=False, help="desired checkpoint to restore")
-parser.add_argument('--test',action='store_true', help="test mode")
-parser.add_argument('--n_samples', type=int, default=100, help="number of samples to generate when testing")
-parser.add_argument('-g', '--gpu_ids', type=str, default="0",
-                   help="gpu to use, e.g. 0  0,1,2. CPU not supported.")
-args = parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--proj_dir', type=str, default="proj_log",
+                    help="path to project folder where models and logs will be saved")
+    parser.add_argument('--pc_root', type=str, default="path_to_pc_data", help="path to point clouds data folder")
+    parser.add_argument('--split_path', type=str, default="data/train_val_test_split.json", help="path to train-val-test split")
+    parser.add_argument('--exp_name', type=str, required=True, help="name of this experiment")
+    parser.add_argument('--ae_ckpt', type=str, required=True, help="desired checkpoint to restore")
+    parser.add_argument('--continue', dest='cont', action='store_true', help="continue training from checkpoint")
+    parser.add_argument('--ckpt', type=str, default='latest', required=False, help="desired checkpoint to restore")
+    parser.add_argument('--test',action='store_true', help="test mode")
+    parser.add_argument('--n_samples', type=int, default=100, help="number of samples to generate when testing")
+    parser.add_argument('-g', '--gpu_ids', type=str, default="0",
+                    help="gpu to use, e.g. 0  0,1,2. CPU not supported.")
+    args = parser.parse_args()
 
-if args.gpu_ids is not None:
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_ids)
+    if args.gpu_ids is not None:
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_ids)
 
-cfg = Config(args)
-print("data path:", cfg.data_root)
-agent = TrainAgent(cfg)
+    cfg = Config(args)
+    print("data path:", cfg.data_root)
+    agent = TrainAgent(cfg)
 
-if not args.test:
-    # load from checkpoint if provided
-    if args.cont:
+    if not args.test:
+        # load from checkpoint if provided
+        if args.cont:
+            agent.load_ckpt(args.ckpt)
+
+        # create dataloader
+        train_loader = get_dataloader('train', cfg)
+        val_loader = get_dataloader('validation', cfg)
+        val_loader = cycle(val_loader)
+
+        # start training
+        clock = agent.clock
+
+        for e in range(clock.epoch, cfg.nr_epochs):
+            # begin iteration
+            pbar = tqdm(train_loader)
+            for b, data in enumerate(pbar):
+                # train step
+                outputs, losses = agent.train_func(data)
+
+                pbar.set_description("EPOCH[{}][{}]".format(e, b))
+                pbar.set_postfix({k: v.item() for k, v in losses.items()})
+
+                # validation step
+                if clock.step % cfg.val_frequency == 0:
+                    data = next(val_loader)
+                    outputs, losses = agent.val_func(data)
+
+                clock.tick()
+
+            clock.tock()
+
+            if clock.epoch % cfg.save_frequency == 0:
+                agent.save_ckpt()
+
+            # if clock.epoch % 10 == 0:
+            agent.save_ckpt('latest')
+    else:
+        # load trained weights
         agent.load_ckpt(args.ckpt)
 
-    # create dataloader
-    train_loader = get_dataloader('train', cfg)
-    val_loader = get_dataloader('validation', cfg)
-    val_loader = cycle(val_loader)
+        test_loader = get_dataloader('test', cfg)
 
-    # start training
-    clock = agent.clock
+        save_dir = os.path.join(cfg.exp_dir, "test_results/ckpt{}".format(args.ckpt))
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
 
-    for e in range(clock.epoch, cfg.nr_epochs):
-        # begin iteration
-        pbar = tqdm(train_loader)
-        for b, data in enumerate(pbar):
-            # train step
-            outputs, losses = agent.train_func(data)
+        all_zs = []
+        all_ids = []
+        pbar = tqdm(test_loader)
+        cnt = 0
+        for i, data in enumerate(pbar):
+            with torch.no_grad():
+                pred_z, _ = agent.forward(data)
+                pred_z = pred_z.detach().cpu().numpy()
+                # print(pred_z.shape)
+                all_zs.append(pred_z)
+            pts = data['points'].detach().cpu().numpy()
+            for j in range(pred_z.shape[0]):
+                all_ids.append(data['id'][j])
+                save_path = os.path.join(save_dir, "{}.ply".format(data['id'][j]))
+                os.makedirs(Path(save_path).parent, exist_ok=True)
+                write_ply(pts[j], save_path)
+            cnt += pred_z.shape[0]
+            if cnt > args.n_samples:
+                break
 
-            pbar.set_description("EPOCH[{}][{}]".format(e, b))
-            pbar.set_postfix({k: v.item() for k, v in losses.items()})
+        all_zs = np.concatenate(all_zs, axis=0)
+        # save generated z
+        save_path = os.path.join(save_dir, "fake_z_ckpt{}.h5".format(args.ckpt))
+        ensure_dir(os.path.dirname(save_path))
+        with h5py.File(save_path, 'w') as fp:
+            fp.create_dataset("zs", shape=all_zs.shape, data=all_zs)
+            fp.create_dataset("ids", data=np.array(all_ids, dtype='S'))
 
-            # validation step
-            if clock.step % cfg.val_frequency == 0:
-                data = next(val_loader)
-                outputs, losses = agent.val_func(data)
-
-            clock.tick()
-
-        clock.tock()
-
-        if clock.epoch % cfg.save_frequency == 0:
-            agent.save_ckpt()
-
-        # if clock.epoch % 10 == 0:
-        agent.save_ckpt('latest')
-else:
-    # load trained weights
-    agent.load_ckpt(args.ckpt)
-
-    test_loader = get_dataloader('test', cfg)
-
-    save_dir = os.path.join(cfg.exp_dir, "results/fake_z_ckpt{}_num{}_pc".format(args.ckpt, args.n_samples))
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-
-    all_zs = []
-    pbar = tqdm(test_loader)
-    cnt = 0
-    for i, data in enumerate(pbar):
-        with torch.no_grad():
-            pred_z, _ = agent.forward(data)
-            pred_z = pred_z.detach().cpu().numpy()
-            # print(pred_z.shape)
-            all_zs.append(pred_z)
-        pts = data['points'].detach().cpu().numpy()
-        for j in range(pred_z.shape[0]):
-            save_path = os.path.join(save_dir, "{}.ply".format(data['id'][j]))
-            write_ply(pts[j], save_path)
-        cnt += pred_z.shape[0]
-        if cnt > args.n_samples:
-            break
-
-    all_zs = np.concatenate(all_zs, axis=0)
-    # save generated z
-    save_path = os.path.join(cfg.exp_dir, "results/fake_z_ckpt{}_num{}.h5".format(args.ckpt, args.n_samples))
-    ensure_dir(os.path.dirname(save_path))
-    with h5py.File(save_path, 'w') as fp:
-        fp.create_dataset("zs", shape=all_zs.shape, data=all_zs)
+if __name__ == '__main__':
+    main()

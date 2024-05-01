@@ -5,12 +5,17 @@ import json
 import h5py
 import random
 from cadlib.macro import *
+from utils import read_ply
 
 
 def get_dataloader(phase, config, shuffle=None):
     is_shuffle = phase == 'train' if shuffle is None else shuffle
 
-    dataset = CADDataset(phase, config)
+    if config.train_pc2cad:
+        dataset = PCCADDataset(phase, config)
+    else:
+        dataset = CADDataset(phase, config)
+
     dataloader = DataLoader(dataset, batch_size=config.batch_size, shuffle=is_shuffle, num_workers=config.num_workers,
                             worker_init_fn=np.random.seed())
     return dataloader
@@ -82,3 +87,48 @@ class CADDataset(Dataset):
 
     def __len__(self):
         return len(self.all_data)
+
+
+class PCCADDataset(CADDataset):
+    def __init__(self, phase, config):
+        super(PCCADDataset, self).__init__(phase, config)
+        self.n_points = config.n_points
+        self.pc_root = config.pc_root
+        
+        real_data_idx = []
+        real_data = []
+        for idx, data_id in enumerate(self.all_data):
+            pc_path = os.path.join(self.pc_root, data_id + '.ply')
+            if not os.path.exists(pc_path):
+                continue
+            real_data_idx.append(idx)    
+            real_data.append(data_id)    
+
+        if len(real_data) == 0 and phase == 'validation':
+            with open(self.path, "r") as fp:
+                self.all_data = json.load(fp)['test']
+
+            for idx, data_id in enumerate(self.all_data[: len(self.all_data)//2]):
+                pc_path = os.path.join(self.pc_root, data_id + '.ply')
+                if not os.path.exists(pc_path):
+                    continue
+                real_data_idx.append(idx)    
+                real_data.append(data_id)    
+
+        self.all_data = real_data
+        assert len(self.all_data) > 0, 'Dataset is empty.'
+
+    def __getitem__(self, index):
+        all_but_points = super().__getitem__(index)
+
+        data_id = all_but_points['id']
+        pc_path = os.path.join(self.pc_root, data_id + '.ply')
+        if not os.path.exists(pc_path):
+            raise ValueError(f'{pc_path} not found!')
+        pc = read_ply(pc_path)
+        sample_idx = random.sample(list(range(pc.shape[0])), self.n_points)
+        pc = pc[sample_idx]
+        points = torch.tensor(pc, dtype=torch.float32)
+
+        all_but_points['points'] = points
+        return all_but_points

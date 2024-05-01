@@ -4,7 +4,7 @@ import argparse
 from dataset.cad_dataset import get_dataloader
 from config import ConfigAE
 from utils import cycle
-from trainer import TrainerAE
+from trainer import TrainerAE, TrainerPCAE
 
 
 def main():
@@ -12,7 +12,10 @@ def main():
     cfg = ConfigAE('train')
 
     # create network and training agent
-    tr_agent = TrainerAE(cfg)
+    if cfg.train_pc2cad:
+        tr_agent = TrainerPCAE(cfg)
+    else:
+        tr_agent = TrainerAE(cfg)
 
     # load from checkpoint if provided
     if cfg.cont:
@@ -46,7 +49,7 @@ def main():
 
             tr_agent.update_learning_rate()
 
-        if clock.epoch % 5 == 0:
+        if clock.epoch % 3 == 0:
             tr_agent.evaluate(val_loader_all)
 
         clock.tock()
