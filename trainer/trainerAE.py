@@ -1,4 +1,6 @@
+import os
 import torch
+import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 from model import CADTransformer, PC2CADTransformer
@@ -14,7 +16,10 @@ class TrainerAE(BaseTrainer):
 
     def set_optimizer(self, cfg):
         """set optimizer and lr scheduler used in training"""
-        self.optimizer = optim.Adam(self.net.parameters(), cfg.lr)
+        if cfg.encoder_only:
+            self.optimizer = optim.Adam(self.net.encoder.parameters(), cfg.lr)
+        else:
+            self.optimizer = optim.Adam(self.net.parameters(), cfg.lr)
         self.scheduler = GradualWarmupScheduler(self.optimizer, 1.0, cfg.warmup_step)
 
     def set_loss_function(self):
@@ -131,6 +136,27 @@ class DecodingOnlyTrainerAE(DecodingOnlyBaseTrainer):
 class TrainerPCAE(TrainerAE):
     def build_net(self, cfg):
         self.net = PC2CADTransformer(cfg).cuda()
+
+    def load_ckpt(self, name=None, is_train=True, encoder_only_training=False):
+        """load checkpoint from saved checkpoint"""
+        if not encoder_only_training:
+            super(TrainerPCAE, self).load_ckpt(name, is_train)
+
+        else:
+            if not os.path.exists(name):
+                raise ValueError("Checkpoint {} not exists.".format(name))
+
+            checkpoint = torch.load(name)
+            print("Loading autoencoder checkpoint from {} ...".format(name))
+
+            model_sd = checkpoint['model_state_dict']
+            keys_to_load = [key for key in model_sd.keys() if "encoder" not in key]
+            subset_state_dict = {key: value for key, value in model_sd.items() if key in keys_to_load}
+
+            if isinstance(self.net, nn.DataParallel):
+                self.net.module.load_state_dict(subset_state_dict, strict=False)
+            else:
+                self.net.load_state_dict(subset_state_dict, strict=False)
 
     def forward(self, data):
         commands = data['command'].cuda() # (N, S)

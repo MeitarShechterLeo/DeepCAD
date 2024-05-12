@@ -2,7 +2,7 @@ from tqdm import tqdm
 from dataset.cad_dataset import get_dataloader
 from config import ConfigAE
 from utils import ensure_dir
-from trainer import TrainerAE
+from trainer import TrainerAE, TrainerPCAE 
 import torch
 import numpy as np
 import os
@@ -28,10 +28,13 @@ def main():
 
 def reconstruct(cfg):
     # create network and training agent
-    tr_agent = TrainerAE(cfg)
+    if cfg.train_pc2cad:
+        tr_agent = TrainerPCAE(cfg)
+    else:
+        tr_agent = TrainerAE(cfg)
 
     # load from checkpoint if provided
-    tr_agent.load_ckpt(cfg.ckpt)
+    tr_agent.load_ckpt(cfg.ckpt, is_train=False)
     tr_agent.net.eval()
 
     # create dataloader

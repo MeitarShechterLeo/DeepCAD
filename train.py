@@ -17,9 +17,12 @@ def main():
     else:
         tr_agent = TrainerAE(cfg)
 
+    if cfg.encoder_only:
+        tr_agent.load_ckpt(cfg.ae_ckpt, encoder_only_training=True)
+
     # load from checkpoint if provided
     if cfg.cont:
-        tr_agent.load_ckpt(cfg.ckpt)
+        tr_agent.load_ckpt(cfg.ckpt, encoder_only_training=False)
 
     # create dataloader
     train_loader = get_dataloader('train', cfg)

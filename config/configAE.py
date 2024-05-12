@@ -88,7 +88,7 @@ class ConfigAE(object):
         parser.add_argument('--batch_size', type=int, default=512, help="batch size")
         parser.add_argument('--num_workers', type=int, default=8, help="number of workers for data loading")
 
-        parser.add_argument('--nr_epochs', type=int, default=17, help="total number of epochs to train")
+        parser.add_argument('--nr_epochs', type=int, default=1000, help="total number of epochs to train")
         parser.add_argument('--lr', type=float, default=1e-3, help="initial learning rate")
         parser.add_argument('--grad_clip', type=float, default=1.0, help="initial learning rate")
         parser.add_argument('--warmup_step', type=int, default=2000, help="step size for learning rate warm up")
@@ -100,6 +100,8 @@ class ConfigAE(object):
         parser.add_argument('--vis_frequency', type=int, default=2000, help="visualize output every x iterations")
         parser.add_argument('--augment', action='store_true', help="use random data augmentation")
         parser.add_argument('--train_pc2cad', action='store_true', default=False, help="train pc encoder instead of sequence")
+        parser.add_argument('--encoder_only', action='store_true', default=False, help="whether to train only encoder")
+        parser.add_argument('--ae_ckpt', type=str, required=True, help="desired checkpoint to restore")
         
         if not self.is_train:
             parser.add_argument('-m', '--mode', type=str, choices=['rec', 'enc', 'dec'])

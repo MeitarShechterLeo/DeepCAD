@@ -11,8 +11,14 @@
             "program": "${file}",
             "console": "integratedTerminal",
             // "args": ["--src", "/home/meitars/Code/DeepCAD/proj_log/pretrained/results/test_1000"],
+            // "args": ["--src", "/home/meitars/Code/DeepCAD/proj_log/pc2cad_end2end_encoder_only_128epoches/results/test_latest", "--num", "100", "--filter"],
             // "args": ["--pc_root", "data/pc_cad", "--exp_name", "pretrained", "--ae_ckpt", "1000", "-g", "1"],
-            "args": ["--pc_root", "data/pc_cad", "--exp_name", "pc2cad_end2end_17epochs", "-g", "1", "--train_pc2cad", "--batch_size", "128",],
+            // "args": ["--pc_root", "data/pc_cad", "--exp_name", "pc2cad_end2end_17epochs", "-g", "1", "--train_pc2cad", "--batch_size", "128",],
+            // "args": ["--mode", "rec", "--pc_root", "data/pc_cad", "--exp_name", "pc2cad_end2end_17epochs", "-g", "1", "--train_pc2cad", "--batch_size", "128",],
+            // "args": ["--mode", "rec", "--pc_root", "data/pc_cad", "--exp_name", "pc2cad_end2end_encoder_only_128epoches", "--ae_ckpt", "", "-g", "1", "--train_pc2cad", "--batch_size", "128",],
+            // "args": ["--pc_root", "data/pc_cad", "--nr_epochs", "128", "--exp_name", "pc2cad_end2end_encoder_only_128epoches", "-g", "1", "--train_pc2cad", "--encoder_only", "--batch_size", "128", "--ae_ckpt", "proj_log/pretrained/model/ckpt_epoch1000.pth"],
+            "args": ["--pc_root", "data/pc_cad", "--nr_epochs", "128", "--exp_name", "temptemptemp", "-g", "1", "--train_pc2cad", "--encoder_only", "--batch_size", "128", "--ae_ckpt", "proj_log/pretrained/model/ckpt_epoch1000.pth"],
+            // "--continue"
             "env": {
                 "PYTHONPATH": "${PYTHONPATH}:/home/meitars/Code/DeepCAD/utils:/home/meitars/Code/DeepCAD"
             }
