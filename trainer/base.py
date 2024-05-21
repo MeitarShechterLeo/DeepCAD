@@ -168,17 +168,21 @@ class TrainClock(object):
         self.step = clock_dict['step']
 
 
-class DecodingOnlyBaseTrainer(object):
+class DecodingOnlyBaseTrainer(nn.Module):
     """Base trainer that provides common training behavior.
         All customized trainer should be subclass of this class.
     """
     def __init__(self, cfg):
+        super(DecodingOnlyBaseTrainer, self).__init__()
         self.cfg = cfg
 
         self.model_dir = cfg.model_dir
 
         # build network
         self.build_net(cfg)
+
+    def forward(self, data):
+        pass
 
     @abstractmethod
     def build_net(self, cfg):

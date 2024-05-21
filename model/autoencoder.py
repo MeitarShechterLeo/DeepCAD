@@ -140,9 +140,10 @@ class CADTransformer(nn.Module):
 
         self.args_dim = cfg.args_dim + 1
 
-        self.encoder = Encoder(cfg)
+        if not hasattr(cfg, 'decoder_only') or not cfg.decoder_only:
+            self.encoder = Encoder(cfg)
 
-        self.bottleneck = Bottleneck(cfg)
+            self.bottleneck = Bottleneck(cfg)
 
         self.decoder = Decoder(cfg)
 

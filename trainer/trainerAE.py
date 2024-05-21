@@ -126,3 +126,12 @@ class DecodingOnlyTrainerAE(DecodingOnlyBaseTrainer):
             out_cad_vec = out_cad_vec.detach().cpu().numpy()
 
         return out_cad_vec
+
+    def forward(self, data):
+        commands = data['command'] # (N, S)
+        args = data['args']  # (N, S, N_ARGS)
+        z = data['z']
+
+        outputs = self.net(commands, args, z)
+
+        return outputs

@@ -65,7 +65,7 @@ def create_by_extrude(extrude_op: Extrude):
     if extrude_op.extent_type == EXTENT_TYPE.index("SymmetricFeatureExtentType"):
         body_sym = BRepPrimAPI_MakePrism(face, ext_vec.Reversed()).Shape()
         body = BRepAlgoAPI_Fuse(body, body_sym).Shape()
-    if extrude_op.extent_type == EXTENT_TYPE.index("TwoSidesFeatureExtentType"):
+    if extrude_op.extent_type == EXTENT_TYPE.index("TwoSidesFeatureExtentType") and extrude_op.extent_two > 0.:
         ext_vec = gp_Vec(normal.Reversed()).Multiplied(extrude_op.extent_two)
         body_two = BRepPrimAPI_MakePrism(face, ext_vec).Shape()
         body = BRepAlgoAPI_Fuse(body, body_two).Shape()

@@ -146,6 +146,25 @@ def decode_given_model(tr_agent, batch_z):
 
     return res
 
+def decode_outputs_given_model(tr_agent, outputs):
+    with torch.no_grad():
+        batch_out_vec = tr_agent.logits2vec(outputs)
+
+    res = []
+
+    for i in range(len(batch_out_vec)):
+        try:
+            out_vec = batch_out_vec[i]
+            out_command = out_vec[:, 0]
+            seq_len = out_command.tolist().index(EOS_IDX)
+
+            res.append(out_vec[:seq_len])
+        except Exception as e:
+            print('Got expection while tryinh to decode outputs:', e)
+
+    return res
+
+
 
 if __name__ == '__main__':
     main()

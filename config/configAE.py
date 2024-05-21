@@ -1,9 +1,9 @@
 import os
-from utils import ensure_dirs
+from DeepCAD.utils import ensure_dirs
 import argparse
 import json
 import shutil
-from cadlib.macro import *
+from DeepCAD.cadlib.macro import *
 
 
 class ConfigAE(object):
@@ -127,7 +127,8 @@ class FixedConfigAE(object):
         self.dim_feedforward = 512       # Transformer config: FF dimensionality
         self.d_model = 256               # Transformer config: model dimensionality
         self.dropout = 0.1                # Dropout rate used in basic layers and Transformers
-        self.dim_z = 256                 # Latent vector dimensionality
+        # self.dim_z = 256                 # Latent vector dimensionality
+        self.dim_z = 1024                 # Latent vector dimensionality - for uni3d
         self.use_group_emb = True
 
         self.max_n_ext = MAX_N_EXT
