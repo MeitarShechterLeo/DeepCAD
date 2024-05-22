@@ -1,7 +1,7 @@
-from .layers.transformer import *
-from .layers.improved_transformer import *
-from .layers.positional_encoding import *
-from .model_utils import _make_seq_first, _make_batch_first, \
+from DeepCAD.model.layers.transformer import *
+from DeepCAD.model.layers.improved_transformer import *
+from DeepCAD.model.layers.positional_encoding import *
+from DeepCAD.model.model_utils import _make_seq_first, _make_batch_first, \
     _get_padding_mask, _get_key_padding_mask, _get_group_mask
 
 

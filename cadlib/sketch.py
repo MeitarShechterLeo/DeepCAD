@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib
 # matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-from .curves import *
-from .macro import *
+from DeepCAD.cadlib.curves import *
+from DeepCAD.cadlib.macro import *
 
 
 ##########################   base  ###########################

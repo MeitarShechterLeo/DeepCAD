@@ -6,7 +6,7 @@ from torch.nn.init import xavier_normal_
 from torch.nn.parameter import Parameter
 from torch.nn.modules.module import Module
 
-from .functional import multi_head_attention_forward
+from DeepCAD.model.layers.functional import multi_head_attention_forward
 
 
 class MultiheadAttention(Module):

@@ -4,7 +4,7 @@ import os
 import json
 import h5py
 import random
-from cadlib.macro import *
+from DeepCAD.cadlib.macro import *
 
 
 def get_dataloader(phase, config, shuffle=None):

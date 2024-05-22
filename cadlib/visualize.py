@@ -7,9 +7,9 @@ from OCC.Extend.DataExchange import write_stl_file
 from OCC.Core.Bnd import Bnd_Box
 from OCC.Core.BRepBndLib import brepbndlib_Add
 from copy import copy
-from .extrude import *
-from .sketch import Loop, Profile
-from .curves import *
+from DeepCAD.cadlib.extrude import *
+from DeepCAD.cadlib.sketch import Loop, Profile
+from DeepCAD.cadlib.curves import *
 import os
 import trimesh
 from trimesh.sample import sample_surface

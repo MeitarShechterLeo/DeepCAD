@@ -1,8 +1,8 @@
 import numpy as np
 import random
-from .sketch import Profile
-from .macro import *
-from .math_utils import cartesian2polar, polar2cartesian, polar_parameterization, polar_parameterization_inverse
+from DeepCAD.cadlib.sketch import Profile
+from DeepCAD.cadlib.macro import *
+from DeepCAD.cadlib.math_utils import cartesian2polar, polar2cartesian, polar_parameterization, polar_parameterization_inverse
 
 
 class CoordSystem(object):

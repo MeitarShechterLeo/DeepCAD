@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.lines as lines
 import matplotlib.patches as patches
-from .math_utils import rads_to_degs, angle_from_vector_to_x
-from .macro import *
+from DeepCAD.cadlib.math_utils import rads_to_degs, angle_from_vector_to_x
+from DeepCAD.cadlib.macro import *
 
 
 # FIXME: these two functions can be treated as static method

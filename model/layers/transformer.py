@@ -9,7 +9,7 @@ from torch.nn.modules.dropout import Dropout
 from torch.nn.modules.linear import Linear
 from torch.nn.modules.normalization import LayerNorm
 
-from .attention import MultiheadAttention
+from DeepCAD.model.layers.attention import MultiheadAttention
 
 
 class Transformer(Module):
