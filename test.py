@@ -9,7 +9,7 @@ sys.path.insert(0, deepcad_path)  # Adds the DeepCAD directory at the start of t
 from tqdm import tqdm
 from DeepCAD.config import ConfigAE
 from DeepCAD.utils import ensure_dir
-from DeepCAD.trainer import TrainerAE
+from DeepCAD.trainer.trainerAE import TrainerAE
 from DeepCAD.cadlib.macro import EOS_IDX
 from DeepCAD.dataset.cad_dataset import get_dataloader
 

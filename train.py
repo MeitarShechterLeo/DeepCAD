@@ -4,7 +4,7 @@ import argparse
 from dataset.cad_dataset import get_dataloader
 from config import ConfigAE
 from utils import cycle
-from trainer import TrainerAE
+from trainer.trainerAE import TrainerAE
 
 
 def main():
