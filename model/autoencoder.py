@@ -3,6 +3,7 @@ from DeepCAD.model.layers.improved_transformer import *
 from DeepCAD.model.layers.positional_encoding import *
 from DeepCAD.model.model_utils import _make_seq_first, _make_batch_first, \
     _get_padding_mask, _get_key_padding_mask, _get_group_mask
+from DeepCAD.pc2cad import PointNet2
 
 
 class CADEmbedding(nn.Module):
@@ -154,6 +155,42 @@ class CADTransformer(nn.Module):
         if z is None:
             z = self.encoder(commands_enc_, args_enc_)
             z = self.bottleneck(z)
+        else:
+            z = _make_seq_first(z)
+
+        if encode_mode: return _make_batch_first(z)
+
+        out_logits = self.decoder(z)
+        out_logits = _make_batch_first(*out_logits)
+
+        res = {
+            "command_logits": out_logits[0],
+            "args_logits": out_logits[1]
+        }
+
+        if return_tgt:
+            res["tgt_commands"] = commands_enc
+            res["tgt_args"] = args_enc
+
+        return res
+
+class PC2CADTransformer(nn.Module):
+    def __init__(self, cfg):
+        super(PC2CADTransformer, self).__init__()
+
+        self.args_dim = cfg.args_dim + 1
+
+        self.encoder = PointNet2()
+
+        self.bottleneck = Bottleneck(cfg)
+
+        self.decoder = Decoder(cfg)
+
+    def forward(self, points, commands_enc, args_enc,
+                z=None, return_tgt=True, encode_mode=False):
+        if z is None:
+            z = self.encoder(points)
+            z = self.bottleneck(z)[None]
         else:
             z = _make_seq_first(z)
 

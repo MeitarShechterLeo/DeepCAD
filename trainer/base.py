@@ -66,7 +66,7 @@ class BaseTrainer(object):
 
         self.net.cuda()
 
-    def load_ckpt(self, name=None):
+    def load_ckpt(self, name=None, is_train=True):
         """load checkpoint from saved checkpoint"""
         name = name if name == 'latest' else "ckpt_epoch{}".format(name)
         load_path = os.path.join(self.model_dir, "{}.pth".format(name))
@@ -79,9 +79,11 @@ class BaseTrainer(object):
             self.net.module.load_state_dict(checkpoint['model_state_dict'])
         else:
             self.net.load_state_dict(checkpoint['model_state_dict'])
-        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
-        self.clock.restore_checkpoint(checkpoint['clock'])
+
+        if is_train:
+            self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+            self.clock.restore_checkpoint(checkpoint['clock'])
 
     @abstractmethod
     def forward(self, data):

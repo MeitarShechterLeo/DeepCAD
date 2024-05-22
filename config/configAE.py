@@ -72,11 +72,15 @@ class ConfigAE(object):
             "loss_args_weight": 2.0
         }
 
+        # pc config
+        self.n_points = 2048
+
     def parse(self):
         """initiaize argument parser. Define default hyperparameters and collect from command-line arguments."""
         parser = argparse.ArgumentParser()
 
         parser.add_argument('--proj_dir', type=str, default="proj_log", help="path to project folder where models and logs will be saved")
+        parser.add_argument('--pc_root', type=str, default="path_to_pc_data", help="path to point clouds data folder")
         parser.add_argument('--data_root', type=str, default="data", help="path to source data folder")
         parser.add_argument('--exp_name', type=str, default=os.getcwd().split('/')[-1], help="name of this experiment")
         parser.add_argument('-g', '--gpu_ids', type=str, default='0', help="gpu to use, e.g. 0  0,1,2. CPU not supported.")
