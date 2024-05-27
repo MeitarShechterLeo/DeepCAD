@@ -139,3 +139,48 @@ class TransformerDecoderLayerGlobalImproved(Module):
         tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt1))))
         tgt = tgt + self.dropout3(tgt2)
         return tgt
+
+class TransformerDecoderLayerMultipleImproved(Module):
+    def __init__(self, d_model, d_global, nhead, dim_feedforward=2048, dropout=0.1, activation="relu", d_global2=None):
+        super(TransformerDecoderLayerMultipleImproved, self).__init__()
+        self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout)
+        self.cross_attn = MultiheadAttention(d_model, nhead, dropout=dropout, kdim=d_global, vdim=d_global)
+
+        if d_global2 is not None:
+            self.linear_global2 = Linear(d_global2, d_model)
+
+        # Implementation of Feedforward model
+        self.linear1 = Linear(d_model, dim_feedforward)
+        self.dropout = Dropout(dropout)
+        self.linear2 = Linear(dim_feedforward, d_model)
+
+        self.norm1 = LayerNorm(d_model)
+        self.norm2 = LayerNorm(d_model)
+        self.dropout1 = Dropout(dropout)
+        self.dropout2 = Dropout(dropout)
+        self.dropout2_2 = Dropout(dropout)
+        self.dropout3 = Dropout(dropout)
+
+        self.activation = _get_activation_fn(activation)
+
+    def __setstate__(self, state):
+        if 'activation' not in state:
+            state['activation'] = F.relu
+        super(TransformerDecoderLayerMultipleImproved, self).__setstate__(state)
+
+    def forward(self, tgt, memory, memory2=None, tgt_mask=None, tgt_key_padding_mask=None, *args, **kwargs):
+        tgt1 = self.norm1(tgt)
+        tgt2 = self.self_attn(tgt1, tgt1, tgt1, attn_mask=tgt_mask, key_padding_mask=tgt_key_padding_mask)[0]
+        tgt = tgt + self.dropout1(tgt2)
+
+        tgt2 = self.cross_attn(tgt, memory, memory, attn_mask=tgt_mask, key_padding_mask=tgt_key_padding_mask)[0]
+        tgt = tgt + self.dropout1(tgt2)
+
+        if memory2 is not None:
+            tgt2_2 = self.linear_global2(memory2)
+            tgt = tgt + self.dropout2_2(tgt2_2)
+
+        tgt1 = self.norm2(tgt)
+        tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt1))))
+        tgt = tgt + self.dropout3(tgt2)
+        return tgt

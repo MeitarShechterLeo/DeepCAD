@@ -107,7 +107,12 @@ class Decoder(nn.Module):
 
         self.embedding = ConstEmbedding(cfg, cfg.max_total_len)
 
-        decoder_layer = TransformerDecoderLayerGlobalImproved(cfg.d_model, cfg.dim_z, cfg.n_heads, cfg.dim_feedforward, cfg.dropout)
+        if cfg.decoder_multiple_latents:
+            decoder_layer = TransformerDecoderLayerMultipleImproved(cfg.d_model, cfg.dim_z, cfg.n_heads, cfg.dim_feedforward, cfg.dropout)
+
+        else:
+            decoder_layer = TransformerDecoderLayerGlobalImproved(cfg.d_model, cfg.dim_z, cfg.n_heads, cfg.dim_feedforward, cfg.dropout)
+
         decoder_norm = LayerNorm(cfg.d_model)
         self.decoder = TransformerDecoder(decoder_layer, cfg.n_layers_decode, decoder_norm)
 
@@ -115,7 +120,7 @@ class Decoder(nn.Module):
         self.fcn = FCN(cfg.d_model, cfg.n_commands, cfg.n_args, args_dim)
 
     def forward(self, z):
-        src = self.embedding(z)
+        src = self.embedding(z) # I think (S, B, D), z=(S/1, B, D)
         out = self.decoder(src, z, tgt_mask=None, tgt_key_padding_mask=None)
 
         command_logits, args_logits = self.fcn(out)

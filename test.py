@@ -161,6 +161,7 @@ def decode_outputs_given_model(tr_agent, outputs):
             res.append(out_vec[:seq_len])
         except Exception as e:
             print('Got expection while tryinh to decode outputs:', e)
+            res.append(None)
 
     return res
 
