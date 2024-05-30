@@ -22,7 +22,7 @@ class CADLoss(nn.Module):
         visibility_mask = _get_visibility_mask(tgt_commands, seq_dim=-1)
         padding_mask = _get_padding_mask(tgt_commands, seq_dim=-1, extended=True) * visibility_mask.unsqueeze(-1)
 
-        command_logits, args_logits = output["command_logits"], output["args_logits"]
+        command_logits, args_logits = output["command_logits"][:, :tgt_commands.shape[1]], output["args_logits"][:, :tgt_commands.shape[1]]
 
         mask = self.cmd_args_mask[tgt_commands.long()]
 

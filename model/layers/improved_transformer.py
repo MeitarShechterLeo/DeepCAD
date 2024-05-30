@@ -141,10 +141,13 @@ class TransformerDecoderLayerGlobalImproved(Module):
         return tgt
 
 class TransformerDecoderLayerMultipleImproved(Module):
-    def __init__(self, d_model, d_global, nhead, dim_feedforward=2048, dropout=0.1, activation="relu", d_global2=None):
+    def __init__(self, d_model, d_global, nhead, dim_feedforward=2048, dropout=0.1, activation="relu", d_global2=None, use_latent_as_input=False):
         super(TransformerDecoderLayerMultipleImproved, self).__init__()
+        self.use_latent_as_input = use_latent_as_input
+
         self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout)
-        self.cross_attn = MultiheadAttention(d_model, nhead, dropout=dropout, kdim=d_global, vdim=d_global)
+        if not use_latent_as_input:
+            self.cross_attn = MultiheadAttention(d_model, nhead, dropout=dropout, kdim=d_global, vdim=d_global)
 
         if d_global2 is not None:
             self.linear_global2 = Linear(d_global2, d_model)
@@ -156,6 +159,7 @@ class TransformerDecoderLayerMultipleImproved(Module):
 
         self.norm1 = LayerNorm(d_model)
         self.norm2 = LayerNorm(d_model)
+        self.norm3 = LayerNorm(d_model)
         self.dropout1 = Dropout(dropout)
         self.dropout2 = Dropout(dropout)
         self.dropout2_2 = Dropout(dropout)
@@ -173,8 +177,10 @@ class TransformerDecoderLayerMultipleImproved(Module):
         tgt2 = self.self_attn(tgt1, tgt1, tgt1, attn_mask=tgt_mask, key_padding_mask=tgt_key_padding_mask)[0]
         tgt = tgt + self.dropout1(tgt2)
 
-        tgt2 = self.cross_attn(tgt, memory, memory, attn_mask=tgt_mask, key_padding_mask=tgt_key_padding_mask)[0]
-        tgt = tgt + self.dropout1(tgt2)
+        if not self.use_latent_as_input:
+            tgt1 = self.norm3(tgt)
+            tgt2 = self.cross_attn(tgt1, memory, memory, attn_mask=tgt_mask, key_padding_mask=tgt_key_padding_mask)[0]
+            tgt = tgt + self.dropout2(tgt2)
 
         if memory2 is not None:
             tgt2_2 = self.linear_global2(memory2)
