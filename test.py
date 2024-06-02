@@ -9,7 +9,7 @@ sys.path.insert(0, deepcad_path)  # Adds the DeepCAD directory at the start of t
 from tqdm import tqdm
 from DeepCAD.config import ConfigAE
 from DeepCAD.utils import ensure_dir
-from DeepCAD.trainer.trainerAE import TrainerAE
+from DeepCAD.trainer.trainerAE import TrainerAE, DecodingOnlyTrainerAE
 from DeepCAD.cadlib.macro import EOS_IDX
 from DeepCAD.dataset.cad_dataset import get_dataloader
 
@@ -146,9 +146,9 @@ def decode_given_model(tr_agent, batch_z):
 
     return res
 
-def decode_outputs_given_model(tr_agent, outputs):
+def decode_outputs(outputs):
     with torch.no_grad():
-        batch_out_vec = tr_agent.logits2vec(outputs)
+        batch_out_vec = DecodingOnlyTrainerAE.logits2vec(outputs)
 
     res = []
 

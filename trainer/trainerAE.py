@@ -113,7 +113,8 @@ class DecodingOnlyTrainerAE(DecodingOnlyBaseTrainer):
         outputs = self.net(None, None, z=z, return_tgt=False)
         return outputs
 
-    def logits2vec(self, outputs, refill_pad=True, to_numpy=True):
+    @staticmethod
+    def logits2vec(outputs, refill_pad=True, to_numpy=True):
         """network outputs (logits) to final CAD vector"""
         out_command = torch.argmax(torch.softmax(outputs['command_logits'], dim=-1), dim=-1)  # (N, S)
         out_args = torch.argmax(torch.softmax(outputs['args_logits'], dim=-1), dim=-1) - 1  # (N, S, N_ARGS)
