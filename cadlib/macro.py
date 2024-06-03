@@ -9,9 +9,11 @@ SOL_IDX = ALL_COMMANDS.index('SOL')
 EXT_IDX = ALL_COMMANDS.index('Ext')
 
 EXTRUDE_OPERATIONS = ["NewBodyFeatureOperation", "JoinFeatureOperation",
-                      "CutFeatureOperation", "IntersectFeatureOperation"]
-EXTENT_TYPE = ["OneSideFeatureExtentType", "SymmetricFeatureExtentType",
-               "TwoSidesFeatureExtentType"]
+                      "CutFeatureOperation", "IntersectFeatureOperation"] # b
+EXTENT_TYPE = ["OneSideFeatureExtentType", "SymmetricFeatureExtentType", 
+               "TwoSidesFeatureExtentType"] # e
+NUM_EXTRUE_OPERATIONS = len(EXTRUDE_OPERATIONS)
+NUM_EXTENT_TYPE = len(EXTENT_TYPE)
 
 PAD_VAL = -1
 N_ARGS_SKETCH = 5 # sketch parameters: x, y, alpha, f, r
@@ -30,6 +32,16 @@ CMD_ARGS_MASK = np.array([[1, 1, 0, 0, 0, *[0]*N_ARGS_EXT],  # line
                           [0, 0, 0, 0, 0, *[0]*N_ARGS_EXT],  # EOS
                           [0, 0, 0, 0, 0, *[0]*N_ARGS_EXT],  # SOL
                           [*[0]*N_ARGS_SKETCH, *[1]*N_ARGS_EXT]]) # Extrude
+                          
+CMD_ARGS_MASK_SEPARETED = np.array([[1, 1, 0, 0, 0, *[0]*N_ARGS_EXT],  # line
+                          [1, 1, 1, 0, 0, *[0]*N_ARGS_EXT],  # arc - flag is handled seperately
+                          [1, 1, 0, 0, 1, *[0]*N_ARGS_EXT],  # circle
+                          [0, 0, 0, 0, 0, *[0]*N_ARGS_EXT],  # EOS
+                          [0, 0, 0, 0, 0, *[0]*N_ARGS_EXT],  # SOL
+                          [*[0]*N_ARGS_SKETCH, *[1]*(N_ARGS_EXT-2), 0, 0]]) # Extrude - b and u is handled seperately
+FLAG_IDX = 3 # only relevant for arc
+EXTRUDE_OPERATION_IDX = N_ARGS_SKETCH + N_ARGS_PLANE + N_ARGS_TRANS + 2 # only relevant for extrude
+EXTENT_TYPE_IDX = N_ARGS_SKETCH + N_ARGS_PLANE + N_ARGS_TRANS + 3 # only relevant for extrude
 
 NORM_FACTOR = 0.75 # scale factor for normalization to prevent overflow during augmentation
 

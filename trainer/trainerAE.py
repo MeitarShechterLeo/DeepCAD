@@ -116,8 +116,20 @@ class DecodingOnlyTrainerAE(DecodingOnlyBaseTrainer):
     @staticmethod
     def logits2vec(outputs, refill_pad=True, to_numpy=True):
         """network outputs (logits) to final CAD vector"""
-        out_command = torch.argmax(torch.softmax(outputs['command_logits'], dim=-1), dim=-1)  # (N, S)
-        out_args = torch.argmax(torch.softmax(outputs['args_logits'], dim=-1), dim=-1) - 1  # (N, S, N_ARGS)
+        out_command = torch.argmax(outputs['command_logits'], dim=-1)  # (N, S)
+
+        args_logits = outputs['args_logits']
+        # make sure invalid predictions are not possible
+        ext_indices = torch.where(out_command == EXT_IDX)
+        arc_indices = torch.where(out_command == ARC_IDX)
+        args_logits[ext_indices[0], ext_indices[1], EXTRUDE_OPERATION_IDX, 1+NUM_EXTRUE_OPERATIONS:] = -np.inf # shift due to -1 PAD_VAL
+        args_logits[ext_indices[0], ext_indices[1], EXTENT_TYPE_IDX, 1+NUM_EXTENT_TYPE:] = -np.inf
+        args_logits[arc_indices[0], arc_indices[1], FLAG_IDX, 1+2:] = -np.inf
+        args_logits[ext_indices[0], ext_indices[1], EXTRUDE_OPERATION_IDX, 0] = -np.inf
+        args_logits[ext_indices[0], ext_indices[1], EXTENT_TYPE_IDX, 0] = -np.inf
+        args_logits[arc_indices[0], arc_indices[1], FLAG_IDX, 0] = -np.inf
+
+        out_args = torch.argmax(args_logits, dim=-1) - 1  # (N, S, N_ARGS)
         if refill_pad: # fill all unused element to -1
             mask = ~torch.tensor(CMD_ARGS_MASK).bool().to(out_args.device)[out_command.long()]
             out_args[mask] = -1

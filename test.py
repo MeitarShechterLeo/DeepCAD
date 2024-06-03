@@ -160,7 +160,7 @@ def decode_outputs(outputs):
 
             res.append(out_vec[:seq_len])
         except Exception as e:
-            print('Got expection while tryinh to decode outputs:', e)
+            print('Got expection while trying to decode outputs:', e)
             res.append(None)
 
     return res
