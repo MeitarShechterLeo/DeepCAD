@@ -149,6 +149,6 @@ class FixedConfigAE(object):
 
         self.exp_name = 'pretrained'
         self.ckpt = '1000'
-        self.proj_dir = '/home/meitars/Code/DeepCAD/proj_log'
+        self.proj_dir = '/home/meitar/Code/DeepCAD/proj_log'
         print(f'self.proj_dir is set to: {self.proj_dir}')
         
