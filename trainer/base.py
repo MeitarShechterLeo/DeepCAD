@@ -3,6 +3,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from abc import abstractmethod
+from pytorch_lightning import LightningModule
 # from tensorboardX import SummaryWriter
 
 
@@ -170,7 +171,7 @@ class TrainClock(object):
         self.step = clock_dict['step']
 
 
-class DecodingOnlyBaseTrainer(nn.Module):
+class DecodingOnlyBaseTrainer(LightningModule):
     """Base trainer that provides common training behavior.
         All customized trainer should be subclass of this class.
     """
@@ -190,7 +191,7 @@ class DecodingOnlyBaseTrainer(nn.Module):
     def build_net(self, cfg):
         raise NotImplementedError
 
-    def load_ckpt(self, name=None):
+    def load_ckpt(self, name=None, load_only_decoder=False):
         """load checkpoint from saved checkpoint"""
         name = name if name == 'latest' else "ckpt_epoch{}".format(name)
         load_path = os.path.join(self.model_dir, "{}.pth".format(name))
@@ -199,7 +200,16 @@ class DecodingOnlyBaseTrainer(nn.Module):
 
         checkpoint = torch.load(load_path)
         print("Loading checkpoint from {} ...".format(load_path))
-        if isinstance(self.net, nn.DataParallel):
-            self.net.module.load_state_dict(checkpoint['model_state_dict'])
+
+        model_sd = checkpoint['model_state_dict']
+        if load_only_decoder:
+            keys_to_load = [key for key in model_sd.keys() if "decoder" in key]
+            subset_state_dict = {key: value for key, value in model_sd.items() if key in keys_to_load}
+
         else:
-            self.net.load_state_dict(checkpoint['model_state_dict'])
+            subset_state_dict = model_sd
+        
+        if isinstance(self.net, nn.DataParallel):
+            self.net.module.load_state_dict(subset_state_dict)
+        else:
+            self.net.load_state_dict(subset_state_dict)
