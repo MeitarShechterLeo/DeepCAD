@@ -9,6 +9,7 @@ import h5py
 import shutil
 import json
 import random
+import pytorch_lightning as pl
 import sys
 sys.path.append("..")
 from pathlib import Path
@@ -52,7 +53,7 @@ class Config(object):
                 json.dump(self.__dict__, f, indent=2)
 
 
-class PointNet2(nn.Module):
+class PointNet2(pl.LightningModule):
     def __init__(self):
         super(PointNet2, self).__init__()
 
@@ -136,6 +137,9 @@ class PointNet2(nn.Module):
             xyz, features = module(xyz, features)
 
         return self.fc_layer(features.squeeze(-1))
+
+    def encode_pc(self, pointcloud):
+        return self(pointcloud)
 
 
 class TrainAgent(BaseTrainer):
