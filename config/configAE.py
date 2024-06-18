@@ -147,8 +147,8 @@ class FixedConfigAE(object):
             "loss_args_weight": 2.0
         }
 
-        self.exp_name = 'pretrained'
+        self.exp_name = 'deepcad'
         self.ckpt = '1000'
-        self.proj_dir = '/home/meitar/Code/DeepCAD/proj_log'
+        self.proj_dir = '/home/meitar/pretrained_models'
         print(f'self.proj_dir is set to: {self.proj_dir}')
         

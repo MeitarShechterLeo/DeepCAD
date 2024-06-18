@@ -13,7 +13,7 @@ class CADLoss(nn.Module):
         self.args_dim = cfg.args_dim + 1
         self.weights = cfg.loss_weights
 
-        self.register_buffer("cmd_args_mask", torch.tensor(CMD_ARGS_MASK_SEPARETED))
+        self.register_buffer("cmd_args_mask", torch.tensor(CMD_ARGS_MASK))
 
     def forward(self, output):
         # Target & predictions
@@ -22,7 +22,7 @@ class CADLoss(nn.Module):
         visibility_mask = _get_visibility_mask(tgt_commands, seq_dim=-1)
         padding_mask = _get_padding_mask(tgt_commands, seq_dim=-1, extended=True) * visibility_mask.unsqueeze(-1)
 
-        command_logits, args_logits = output["command_logits"][:, :tgt_commands.shape[1]], output["args_logits"][:, :tgt_commands.shape[1]]
+        command_logits, args_logits = output["command_logits"], output["args_logits"]
 
         mask = self.cmd_args_mask[tgt_commands.long()]
 
@@ -55,5 +55,5 @@ class CADLoss(nn.Module):
         loss_args = self.weights["loss_args_weight"] * loss_args
         loss_discrete = self.weights["loss_args_weight"] * loss_discrete
 
-        res = {"loss_cmd": loss_cmd, "loss_args": loss_args, "loss_discrete": loss_discrete}
+        res = {"loss_cmd": loss_cmd, "loss_args": loss_args}
         return res
