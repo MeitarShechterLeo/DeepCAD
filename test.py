@@ -146,9 +146,12 @@ def decode_given_model(tr_agent, batch_z):
 
     return res
 
-def decode_outputs(outputs):
-    with torch.no_grad():
-        batch_out_vec = DecodingOnlyTrainerAE.logits2vec(outputs)
+def decode_outputs(outputs, is_logits=True):
+    if is_logits:
+        with torch.no_grad():
+            batch_out_vec = DecodingOnlyTrainerAE.logits2vec(outputs)
+    else:
+        batch_out_vec = DecodingOnlyTrainerAE.pad_and_concat(out_command=outputs['cmd'], out_args=outputs['args'])
 
     res = []
 
