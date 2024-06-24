@@ -151,4 +151,6 @@ class FixedConfigAE(object):
         self.ckpt = '1000'
         self.proj_dir = '/home/meitar/pretrained_models'
         print(f'self.proj_dir is set to: {self.proj_dir}')
+
+        self.decoder_multiple_latents = False
         

@@ -113,8 +113,8 @@ class DecodingOnlyTrainerAE(DecodingOnlyBaseTrainer):
         outputs = self.net(None, None, z=z, return_tgt=False)
         return outputs
 
-    @staticmethod
-    def logits2vec(outputs, refill_pad=True, to_numpy=True):
+    @classmethod
+    def logits2vec(cls, outputs, refill_pad=True, to_numpy=True):
         """network outputs (logits) to final CAD vector"""
         out_command = torch.argmax(outputs['command_logits'], dim=-1)  # (N, S)
 
@@ -130,6 +130,11 @@ class DecodingOnlyTrainerAE(DecodingOnlyBaseTrainer):
         args_logits[arc_indices[0], arc_indices[1], FLAG_IDX, 0] = -np.inf
 
         out_args = torch.argmax(args_logits, dim=-1) - 1  # (N, S, N_ARGS)
+
+        return cls.pad_and_concat(out_command, out_args, refill_pad, to_numpy)
+
+    @staticmethod
+    def pad_and_concat(out_command, out_args, refill_pad=True, to_numpy=True):
         if refill_pad: # fill all unused element to -1
             mask = ~torch.tensor(CMD_ARGS_MASK).bool().to(out_args.device)[out_command.long()]
             out_args[mask] = -1
