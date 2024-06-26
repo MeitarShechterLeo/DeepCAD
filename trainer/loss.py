@@ -33,7 +33,10 @@ class CADLoss(nn.Module):
 
         mask = self.cmd_args_mask[tgt_commands.long()]
 
-        loss_cmd = F.cross_entropy(command_logits[padding_mask.bool()].reshape(-1, self.n_commands), tgt_commands[padding_mask.bool()].reshape(-1).long())
+        cmd_logits = command_logits[padding_mask.bool()].reshape(-1, self.n_commands)
+        tgt_cmd = tgt_commands[padding_mask.bool()].reshape(-1).long()
+        cmd_class_weights = torch.tensor(self.weights["loss_cmd_class_weights"]).to(mask.device)
+        loss_cmd = F.cross_entropy(cmd_logits, tgt_cmd, weight=cmd_class_weights)
         loss_args = F.cross_entropy(args_logits[mask.bool()].reshape(-1, self.args_dim), tgt_args[mask.bool()].reshape(-1).long() + 1)  # shift due to -1 PAD_VAL
 
         if self.loss_version == 'v1':

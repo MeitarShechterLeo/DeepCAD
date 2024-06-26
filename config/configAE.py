@@ -109,10 +109,10 @@ class ConfigAE(object):
         return parser, args
 
 class FixedConfigAE(object):
-    def __init__(self, phase):
+    def __init__(self, phase, loss_cfg={}):
         self.is_train = phase == "train"
 
-        self.set_configuration()
+        self.set_configuration(loss_cfg)
 
         # experiment paths
         self.exp_dir = os.path.join(self.proj_dir, self.exp_name)
@@ -120,7 +120,7 @@ class FixedConfigAE(object):
         self.model_dir = os.path.join(self.exp_dir, 'model')
         ensure_dirs([self.model_dir])
 
-    def set_configuration(self):
+    def set_configuration(self, loss_cfg={}):
         self.args_dim = ARGS_DIM # 256
         self.n_args = N_ARGS
         self.n_commands = len(ALL_COMMANDS)  # line, arc, circle, EOS, SOS
@@ -131,9 +131,9 @@ class FixedConfigAE(object):
         self.dim_feedforward = 512       # Transformer config: FF dimensionality
         self.d_model = 256               # Transformer config: model dimensionality
         self.dropout = 0.1                # Dropout rate used in basic layers and Transformers
-        # self.dim_z = 256                 # Latent vector dimensionality
-        self.dim_z = 1024                 # Latent vector dimensionality - for uni3d
+        self.dim_z = loss_cfg.get('dim_z', 256) # Latent vector dimensionality
         self.use_group_emb = True
+        self.decoder_multiple_latents = False
 
         self.max_n_ext = MAX_N_EXT
         self.max_n_loops = MAX_N_LOOPS
@@ -143,14 +143,12 @@ class FixedConfigAE(object):
         self.max_total_len = MAX_TOTAL_LEN
 
         self.loss_weights = {
-            "loss_cmd_weight": 1.0,
-            "loss_args_weight": 2.0
+            "loss_cmd_weight": loss_cfg.get('loss_cmd_weight', 1.0),
+            "loss_args_weight": loss_cfg.get('loss_args_weight', 2.0),
+            "loss_cmd_class_weights": loss_cfg.get('loss_cmd_class_weights', [1.] * self.n_commands) # ['Line', 'Arc', 'Circle', 'EOS', 'SOL', 'Ext']
         }
 
         self.exp_name = 'deepcad'
         self.ckpt = '1000'
         self.proj_dir = '/home/meitar/pretrained_models'
         print(f'self.proj_dir is set to: {self.proj_dir}')
-
-        self.decoder_multiple_latents = False
-        
